@@ -53,12 +53,15 @@ namespace thread_func {
                     threads_counter--;      // Уменьшаем кол-во потоков и завершаем работу
                     return;
                 }
+                threads_counter++; 
                 if (threads_counter.load() < max_threads.load()) {          // Если в нашем "пуле" есть доступные треды, то создаем новый
                     std::thread([object, name]() { thread_func::findFileByName(object, name); }).detach();
-                    threads_counter++;      // И увеличиваем счетчик
-
-                } else
+                         // И увеличиваем счетчик
+                    
+                } else {
+                    threads_counter--;
                     findFileByName(object, name);                   // Иначе просто рекурсивно вызываем метод в рамках данного потока
+                }
             }
         }
         threads_counter--;                  // Уменьшаем кол-во потоков и завершаем работу потока
@@ -86,12 +89,13 @@ void findFileByName(Node *root, const std::string &name) {
                 threads_counter--;
                 return;
             }
+            threads_counter++;
             if (threads_counter.load() < max_threads.load()) {
                 std::thread([object, name]() { thread_func::findFileByName(object, name); }).detach();
-                threads_counter++;
-
-            } else
+            } else {
+                threads_counter--;
                 findFileByName(object, name);
+            }
         }
     threads_counter--;
 }
