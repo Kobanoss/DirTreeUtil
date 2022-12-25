@@ -36,11 +36,11 @@ namespace thread_func {
         if (strcmp(name.c_str(), root->path.filename().string().c_str()) == 0 && !root->is_dir) {
             bool tmp = exit_flag.exchange(true);                 // Обмениваем флаг, если нашли файл
             if (tmp) {                                              // Если уже был найден
-                threads_counter.exchange(threads_counter - 1);  // Уменьшаем кол-во потоков и заканчиваем работу
+                threads_counter--;  // Уменьшаем кол-во потоков и заканчиваем работу
                 return;
             }
             detected_path = root->path.string();                    // Записываем путь до файла
-            threads_counter.exchange(threads_counter - 1);      // Уменьшаем кол-во потоков и завершаем работу
+            threads_counter--;      // Уменьшаем кол-во потоков и завершаем работу
             return;
         }
 
@@ -50,18 +50,18 @@ namespace thread_func {
         if (root->is_dir) {
             for (Node *object: root->children) {
                 if (exit_flag.load()) {                                     // Если файл уже найден
-                    threads_counter.exchange(threads_counter - 1);      // Уменьшаем кол-во потоков и завершаем работу
+                    threads_counter--;      // Уменьшаем кол-во потоков и завершаем работу
                     return;
                 }
                 if (threads_counter.load() < max_threads.load()) {          // Если в нашем "пуле" есть доступные треды, то создаем новый
                     std::thread([object, name]() { thread_func::findFileByName(object, name); }).detach();
-                    threads_counter.exchange(threads_counter + 1);      // И увеличиваем счетчик
+                    threads_counter++;      // И увеличиваем счетчик
 
                 } else
                     findFileByName(object, name);                   // Иначе просто рекурсивно вызываем метод в рамках данного потока
             }
         }
-        threads_counter.exchange(threads_counter - 1);                  // Уменьшаем кол-во потоков и завершаем работу потока
+        threads_counter--;                  // Уменьшаем кол-во потоков и завершаем работу потока
     }
 }
 
@@ -71,11 +71,11 @@ void findFileByName(Node *root, const std::string &name) {
     if (strcmp(name.c_str(), root->path.filename().string().c_str()) == 0 && !root->is_dir) {
         bool tmp = exit_flag.exchange(true);
         if (tmp) {
-            threads_counter.exchange(threads_counter - 1);
+            threads_counter--;
             return;
         }
         detected_path = root->path.string();
-        threads_counter.exchange(threads_counter - 1);
+        threads_counter--;
         return;
     }
 
@@ -83,16 +83,17 @@ void findFileByName(Node *root, const std::string &name) {
     if (root->is_dir)
         for (Node *object: root->children) {
             if (exit_flag.load()) {
-                threads_counter.exchange(threads_counter - 1);
+                threads_counter--;
                 return;
             }
             if (threads_counter.load() < max_threads.load()) {
                 std::thread([object, name]() { thread_func::findFileByName(object, name); }).detach();
-                threads_counter.exchange(threads_counter + 1);
+                threads_counter++;
 
             } else
                 findFileByName(object, name);
         }
+    threads_counter--;
 }
 
 // Вывод содержимого дерева
