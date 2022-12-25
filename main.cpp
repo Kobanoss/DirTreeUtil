@@ -26,8 +26,8 @@ namespace fs = std::experimental::filesystem;
 std::atomic<bool> exit_flag;        // Атомик, фиксирующий нахождение значения
 std::string detected_path;          // Найденный путь
 
-std::atomic<unsigned int> threads_counter;      // Счетчик потоков
-std::atomic<unsigned int> max_threads;          // Максимальное число потоков
+std::atomic<int> threads_counter;      // Счетчик потоков
+std::atomic<int> max_threads;          // Максимальное число потоков
 
 namespace thread_func {
     void findFileByName(Node *root, std::string name) {
